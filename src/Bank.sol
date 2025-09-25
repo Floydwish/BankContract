@@ -12,12 +12,13 @@ contract myBank{
     // 数组，用于记录存款金额的前3名用户
     address[3] public top3Depositors;
 
-    
+    // 函数修饰器：仅owner可以调用
     modifier onlyOwner() {
         require(msg.sender == owner, "You are not the owner");
         _;
     }
 
+    // 函数修饰器：防止重入攻击
     modifier reentrantGuard(){
         require(!reentrant, "Reentrant call detected");
         reentrant = true;
@@ -30,6 +31,7 @@ contract myBank{
         owner = msg.sender; // 设置合约所有者为部署者
     }
 
+    // 内部存款函数，用于处理存款逻辑
     function _deposit() internal {
         require(msg.value > 0, "Deposit amount must greater than 0");
 
@@ -48,11 +50,12 @@ contract myBank{
     }
 
     // 收款函数
+    // payable 关键字，表示合约可以接收 ETH
     receive() external payable {
         _deposit(); 
     }
 
-        // 取款函数，用于从合约地址提取资金
+    // 取款函数，用于从合约地址提取资金
     function withdraw(uint256 _amount) public onlyOwner reentrantGuard{
         // 1. 检查合约总存款金额是否足够
         require(totalDeposits >= _amount, "Insufficient balance");
@@ -67,6 +70,7 @@ contract myBank{
 
     }
 
+    // 更新Top3 用户
     function updateTop3Depositors() internal{
         // 1. 获取当前存款用户的地址和金额
         address currentUser = msg.sender;
