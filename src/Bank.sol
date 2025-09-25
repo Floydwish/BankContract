@@ -72,11 +72,18 @@ contract myBank{
 
     // 更新Top3 用户
     function updateTop3Depositors() internal{
-        // 1. 获取当前存款用户的地址和金额
         address currentUser = msg.sender;
-        uint256 currentBalance = balances[currentUser]; // 这里不用msg.value, 因为这是本次的存款金额，实际可能累计多次
+        uint256 currentBalance = balances[currentUser];
 
-        // 2.找到Top3 中余额最低用户及其index
+        // 检查是否已经有空位，如果有直接放入
+        for(uint i = 0; i < top3Depositors.length; i++){
+            if(top3Depositors[i] == address(0)){
+                top3Depositors[i] = currentUser;
+                return;
+            }
+        }
+
+        // 如果没有空位，找到Top3 中余额最低用户及其index
         uint256 minBalance = balances[top3Depositors[0]];
         uint minIndex = 0;
 
@@ -87,21 +94,9 @@ contract myBank{
             }
         }
 
-        // 3.如果当前用户比 Top3 最低的要高，或者是空位, 就放入
-        if(currentBalance > minBalance || top3Depositors[minIndex] == address(0)){
+        // 如果当前用户比 Top3 最低的要高，就替换
+        if(currentBalance > minBalance){
             top3Depositors[minIndex] = currentUser; 
-        }
-
-        // 4.按照从高到低排序
-        for(uint i = 0; i < top3Depositors.length -1; i++){
-            for(uint j = i + 1; j < top3Depositors.length; j++)
-            {
-                if(balances[top3Depositors[i]] < balances[top3Depositors[j]]){
-                    address tmp = top3Depositors[i];
-                    top3Depositors[i] = top3Depositors[j];
-                    top3Depositors[j] = tmp;
-                }
-            }
         }
     }
 
