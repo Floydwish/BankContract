@@ -45,7 +45,7 @@ contract myBank{
 
     // 存款函数，用于存储资金到 Bank 合约地址
     // payable 关键字，表示合约可以接收 ETH
-    function deposit() public payable reentrantGuard{
+    function deposit() public payable{
         _deposit();
     }
 
