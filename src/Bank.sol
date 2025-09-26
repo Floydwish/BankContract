@@ -86,7 +86,7 @@ contract myBank{
     // 机制：Check-Effects-Interactions 模式
     function withdraw() public {
         // 1. 检查余额
-        uint256 amount = balance[msg.sender];
+        require(balance[msg.sender] > 0);
 
         // 2. 更新余额
         balance[msg.sender] = 0;
