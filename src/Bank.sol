@@ -3,7 +3,13 @@ pragma solidity ^0.8.17;
 
 contract myBank{
     address private owner;              // 合约所有者地址
-    uint256 public totalDeposits;       // 总存款金额
+
+    // 取消总存款金额的记录，原因：
+    // 1.数据可能不准确（存在节点转入金额的情况，但不会被这个值记录，造成数据不一致）
+    // 2.节省 gas (这个值可以通过 内置函数 balance 获取)
+    // 3.增加了代码复杂性（代码中多处需要更新这个值）
+    //uint256 public totalDeposits;       // 总存款金额
+
     bool private reentrant;             // 重入锁变量
 
     //mapping 类型变量，用于存储每个地址对应的余额
@@ -37,7 +43,6 @@ contract myBank{
 
         // 将发送者地址和金额存入mapping
         balances[msg.sender] += msg.value;
-        totalDeposits += msg.value;
 
         // 更新Top3 用户
         updateTop3Depositors();
@@ -58,15 +63,11 @@ contract myBank{
     // 取款函数，用于从合约地址提取资金
     function withdraw(uint256 _amount) public onlyOwner reentrantGuard{
         // 1. 检查合约总存款金额是否足够
-        require(totalDeposits >= _amount, "Insufficient balance");
+        require(address(this).balance >= _amount, "Insufficient balance");
 
-        // 2. 更新余额
-        totalDeposits -= _amount;
-
-        // 3.将资金发送给所有者
+        // 2.将资金发送给所有者
         (bool success, ) = owner.call{value: _amount}("");
         require(success, "Withdraw failed");
-
 
     }
 
@@ -111,6 +112,22 @@ contract myBank{
                 }
             }
         }
+
+        /*
+        要点：
+        • 理解合约作为一个账号、也可以持有资产
+        • msg.value / 如何传递 Value
+        • 回调函数的理解(receive/fallback)
+        • Payable 关键字理解
+        • Mapping 、数组使用
+
+        常见问题：
+        • 不用保存 total balance
+        • 不用同时保存 address[3] 和 uint[3] (复用mapping的数据)
+        • 不需要保存所有的数组数据
+        • 排序代码复用 (在 receive 及 deposit 中)
+        • 排序代码放 View 函数可以么?
+        */
     }
 
 }
